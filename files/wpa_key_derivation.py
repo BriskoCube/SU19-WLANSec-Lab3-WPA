@@ -36,14 +36,20 @@ def customPRF512(key,A,B):
     return R[:blen]
 
 # Read capture file -- it contains beacon, open authentication, associacion, 4-way handshake and data
-wpa=rdpcap("wpa_handshake.cap") 
+wpa=rdpcap("wpa_handshake.cap")
+
+#for packet in wpa:
+    #print packet.show()
+    #print packet.addr3.replace(":", "")
+
+
 
 # Important parameters for key derivation - some of them can be obtained from the pcap file
 passPhrase  = "actuelle" #this is the passphrase of the WPA network
 A           = "Pairwise key expansion" #this string is used in the pseudo-random function and should never be modified
-ssid        = "SWI"
-APmac       = a2b_hex("cebcc8fdcab7") #MAC address of the AP
-Clientmac   = a2b_hex("0013efd015bd") #MAC address of the client
+ssid        =  wpa[0].info #"SWI"
+APmac       = a2b_hex(wpa[0].addr3.replace(":", "")) #a2b_hex("cebcc8fdcab7") #MAC address of the AP
+Clientmac   = a2b_hex(wpa[1].addr1.replace(":", "")) # a2b_hex("0013efd015bd") #MAC address of the client
 
 # Authenticator and Supplicant Nonces
 ANonce      = a2b_hex("90773b9a9661fee1f406e8989c912b45b029c652224e8b561417672ca7e0fd91")
