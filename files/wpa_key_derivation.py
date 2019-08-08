@@ -36,13 +36,12 @@ def customPRF512(key,A,B):
     return R[:blen]
 
 # Read capture file -- it contains beacon, open authentication, associacion, 4-way handshake and data
-wpa=rdpcap("wpa_handshake.cap")
+wpa=rdpcap("wpa_handshake.cap"autj
+
 
 #for packet in wpa:
-    #print packet.show()
+    #print packet[5].load-encode("hex")
     #print packet.addr3.replace(":", "")
-
-
 
 # Important parameters for key derivation - some of them can be obtained from the pcap file
 passPhrase  = "actuelle" #this is the passphrase of the WPA network
@@ -52,18 +51,24 @@ APmac       = a2b_hex(wpa[0].addr3.replace(":", "")) #a2b_hex("cebcc8fdcab7") #M
 Clientmac   = a2b_hex(wpa[1].addr1.replace(":", "")) # a2b_hex("0013efd015bd") #MAC address of the client
 
 # Authenticator and Supplicant Nonces
-ANonce      = a2b_hex("90773b9a9661fee1f406e8989c912b45b029c652224e8b561417672ca7e0fd91")
-SNonce      = a2b_hex("7b3826876d14ff301aee7c1072b5e9091e21169841bce9ae8a3f24628f264577")
+ANonce      = a2b_hex(wpa[5].load[13:45].encode("hex"))
+SNonce      = a2b_hex(wpa[6].load[13:45].encode("hex"))
 
 # This is the MIC contained in the 4th frame of the 4-way handshake. I copied it by hand.
 # When trying to crack the WPA passphrase, we will compare it to our own MIC calculated using passphrases from a dictionary
-mic_to_test = "36eef66540fa801ceee2fea9b7929b40"
+mic_to_test = wpa[8].load[77:93].encode("hex")
 
 B           = min(APmac,Clientmac)+max(APmac,Clientmac)+min(ANonce,SNonce)+max(ANonce,SNonce) #used in pseudo-random function
 
 # Take a good look at the contents of this variable. Compare it to the Wireshark last message of the 4-way handshake.
 # In particular, look at the last 16 bytes. Read "Important info" in the lab assignment for explanation
-data        = a2b_hex("0103005f02030a0000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") 
+
+# Get an object describing EAPoL auth
+eapol = wpa[8][EAPOL]
+
+# Combine eapol values and load to create data
+data = "{0:02x}{1:02x}{2:04x}".format(eapol.version, eapol.type, eapol.len) + wpa[8].load.encode("hex")
+data = a2b_hex(data[:-36] + "0" * 36)
 
 print "\n\nValues used to derivate keys"
 print "============================"
